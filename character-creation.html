@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色创建 - 破壁纪元</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4169E1',
+                        secondary: '#2C3E50',
+                        accent: '#E74C3C',
+                        background: '#F5F7FA',
+                        card: '#FFFFFF',
+                        border: '#E8E8E8'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+        * {
+            font-family: 'Noto Sans SC', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #4169E1 0%, #6B8DD6 100%);
+        }
+
+        .tree-item {
+            transition: all 0.3s ease;
+        }
+
+        .tree-toggle {
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tree-toggle.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tree-children {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+
+        .tree-children.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+
+        .skill-option {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .skill-option:hover:not(.locked) {
+            background: linear-gradient(to right, #f0f9ff, white);
+            border-color: #93c5fd;
+        }
+
+        .skill-option.selected {
+            background: linear-gradient(to right, #dbeafe, white);
+            border-color: #4169E1;
+        }
+
+        .skill-option.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .skill-option.dependency-locked {
+            background: linear-gradient(to right, #fef3c7, white);
+            border-color: #f59e0b;
+        }
+
+        .point-remaining {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.2);
+        }
+
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .category-header {
+            background: linear-gradient(to right, #f8fafc, white);
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s;
+        }
+
+        .category-header:hover {
+            background: linear-gradient(to right, #f1f5f9, white);
+        }
+
+        .negative-points {
+            color: #ef4444;
+        }
+
+        .positive-points {
+            color: #10b981;
+        }
+
+        .tree-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            margin-right: 12px;
+        }
+
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .checkbox-custom.checked {
+            background: #4169E1;
+            border-color: #4169E1;
+        }
+
+        .radio-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .radio-custom.checked {
+            border-color: #4169E1;
+        }
+
+        .radio-custom.checked::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #4169E1;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="gradient-bg p-6 text-center">
+                <h1 class="text-2xl font-bold text-white mb-1">
+                    <i class="fas fa-user-plus mr-2"></i>创建你的角色
+                </h1>
+                <p class="text-blue-100 text-sm">为你的职场冒险之旅做好充分准备</p>
+            </div>
+
+            <div class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-1 space-y-4">
+                        <div class="text-center">
+                            <div id="avatarPreview" class="avatar-preview mx-auto mb-3">
+                                <span id="avatarInitial">?</span>
+                            </div>
+                            <p class="text-gray-500 text-xs">角色头像预览</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-user mr-2 text-primary"></i>角色名称
+                            </label>
+                            <input type="text" id="playerName" 
+                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-primary transition-colors"
+                                placeholder="请输入角色名称" maxlength="10">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-venus-mars mr-2 text-primary"></i>性别
+                            </label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div id="genderMale" class="skill-option border-2 border-primary rounded-xl p-3 text-center bg-blue-50" onclick="selectGender('男')">
+                                    <i class="fas fa-mars text-xl text-blue-500"></i>
+                                    <p class="text-sm font-medium mt-1">男</p>
+                                </div>
+                                <div id="genderFemale" class="skill-option border-2 border-gray-200 rounded-xl p-3 text-center" onclick="selectGender('女')">
+                                    <i class="fas fa-venus text-xl text-pink-500"></i>
+                                    <p class="text-sm font-medium mt-1">女</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-gray-600">剩余可分配点数</span>
+                                <span id="remainingPoints" class="text-2xl font-bold text-primary point-remaining">100</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="pointProgress" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300" style="width: 100%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-400 mt-2">
+                                <span>已用: <span id="usedPoints">0</span></span>
+                                <span>总点: 100</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-briefcase mr-2 text-primary"></i>目标职位
+                            </label>
+                            <div class="skill-option border-2 border-primary rounded-xl p-3 bg-blue-50">
+                                <div class="flex items-center">
+                                    <i class="fas fa-robot text-primary mr-2"></i>
+                                    <span class="font-medium">Agent工程师</span>
+                                    <i class="fas fa-check-circle text-primary ml-auto"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-3">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-bold text-gray-800">
+                                <i class="fas fa-sitemap mr-2 text-purple-500"></i>属性分配
+                            </h2>
+                            <button onclick="resetAll()" class="text-sm text-gray-500 hover:text-gray-700 flex items-center px-3 py-1.5 rounded-lg hover:bg-gray-100">
+                                <i class="fas fa-redo mr-1"></i>重置全部
+                            </button>
+                        </div>
+
+                        <div class="space-y-3" id="skillTree">
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
+                            <div class="text-sm text-gray-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                点击分类标题可展开/收起，单选项直接点击选项即可，多选项点击复选框
+                            </div>
+                            <button id="startBtn" onclick="startGame()" 
+                                class="px-6 py-3 gradient-bg text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5">
+                                <i class="fas fa-play mr-2"></i>开始游戏
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_POINTS = 100;
+        let remainingPoints = TOTAL_POINTS;
+        let selectedGender = '男';
+        let playerName = '';
+
+        const skillTree = {
+            education: {
+                name: '学历背景',
+                icon: 'fa-graduation-cap',
+                iconColor: 'bg-blue-500',
+                type: 'single',
+                description: '单选，选择最高学历',
+                options: [
+                    { id: 'edu专科', name: '专科', points: 0 },
+                    { id: 'edu普通本科', name: '普通本科', points: 8 },
+                    { id: 'edu211', name: '211本科', points: 10 },
+                    { id: 'edu985', name: '985本科', points: 15 },
+                    { id: 'edu硕士', name: '硕士', points: 20 }
+                ]
+            },
+            psychology: {
+                name: '心理特质',
+                icon: 'fa-brain',
+                iconColor: 'bg-purple-500',
+                type: 'single',
+                description: '单选，选择心理特质',
+                options: [
+                    { id: 'psy玻璃心', name: '玻璃心', points: -10, desc: '压力易碎' },
+                    { id: 'psy普通人', name: '普通人', points: 0 },
+                    { id: 'psy压力爱好者', name: '压力爱好者', points: 10, desc: '压力变动力' }
+                ]
+            },
+            physical: {
+                name: '身体特质',
+                icon: 'fa-heartbeat',
+                iconColor: 'bg-red-500',
+                type: 'single',
+                description: '单选，选择身体特质',
+                options: [
+                    { id: 'phy电量不足', name: '电量不足', points: -10, desc: '常开省电模式' },
+                    { id: 'phy普通人', name: '普通人', points: 0 },
+                    { id: 'phy牛马体质', name: '牛马体质', points: 10, desc: '续航无限' }
+                ]
+            },
+            tech: {
+                name: '技术能力',
+                icon: 'fa-code',
+                iconColor: 'bg-green-500',
+                type: 'multi',
+                description: '多选，可自由选择多个技能',
+                children: {
+                    programming: {
+                        name: '编程基础',
+                        options: [
+                            { id: 'progPython', name: '熟悉Python', points: 5 },
+                            { id: 'progGo', name: 'Go', points: 4, extra: '其他语言' },
+                            { id: 'progJava', name: 'Java', points: 4, extra: '其他语言' },
+                            { id: 'progRust', name: 'Rust', points: 4, extra: '其他语言' }
+                        ]
+                    },
+                    aiml: {
+                        name: 'AI/ML能力',
+                        options: [
+                            { id: 'aimlML', name: '机器学习基础', points: 6 },
+                            { id: 'aimlDL', name: '深度学习基础', points: 8, requires: 'aimlML' },
+                            { id: 'aimlNLP', name: 'NLP基础', points: 6, requires: 'aimlDL' }
+                        ]
+                    },
+                    llm: {
+                        name: 'LLM应用',
+                        options: [
+                            { id: 'llmPrompt', name: 'Prompt Engineering', points: 4 },
+                            { id: 'llmRAG', name: 'RAG技术', points: 8, requires: 'llmPrompt' },
+                            { id: 'llmFineTune', name: 'Fine-tuning', points: 12, requires: 'llmRAG' }
+                        ]
+                    },
+                    agent: {
+                        name: 'Agent开发',
+                        options: [
+                            { id: 'agentFramework', name: 'Agent框架', points: 6, extra: 'LangChain/LlamaIndex' },
+                            { id: 'agentCore', name: 'Agent核心能力', points: 10, requires: 'agentFramework', extra: 'Function Calling/Tool Use/Memory/Planning' },
+                            { id: 'agentMulti', name: 'Multi-Agent协作', points: 15, requires: 'agentCore' }
+                        ]
+                    },
+                    engineering: {
+                        name: '工程化能力',
+                        options: [
+                            { id: 'engContainer', name: '容器化部署', points: 5, extra: 'Docker/K8s' },
+                            { id: 'engDistributed', name: '分布式系统', points: 10 },
+                            { id: 'engAPI', name: 'API开发', points: 4 }
+                        ]
+                    }
+                }
+            },
+            project: {
+                name: '项目经历',
+                icon: 'fa-briefcase',
+                iconColor: 'bg-yellow-500',
+                type: 'multi',
+                description: '多选，可自由选择多个项目',
+                children: {
+                    basic: {
+                        name: '基础项目',
+                        options: [
+                            { id: 'projBasic', name: '课程/毕业设计', points: 2 }
+                        ]
+                    },
+                    personal: {
+                        name: '个人项目',
+                        options: [
+                            { id: 'projOpenSource', name: '个人开源项目', points: 4 },
+                            { id: 'projBlog', name: '技术博客/社区', points: 3 }
+                        ]
+                    },
+                    internship: {
+                        name: '实习经历',
+                        options: [
+                            { id: 'projIntern', name: '普通实习', points: 6 },
+                            { id: 'projBigCompany', name: '大厂实习', points: 15 },
+                            { id: 'projCoreProject', name: '大厂核心项目', points: 20, requires: 'projBigCompany' }
+                        ]
+                    },
+                    highValue: {
+                        name: '高价值项目',
+                        options: [
+                            { id: 'projPR', name: '开源贡献', points: 10, extra: '向知名项目提交PR' },
+                            { id: 'projCompetition', name: '专业比赛获奖', points: 8, extra: 'Kaggle/ACM等' },
+                            { id: 'projPaper', name: '顶会论文', points: 15 }
+                        ]
+                    }
+                }
+            },
+            bonus: {
+                name: '加分项',
+                icon: 'fa-star',
+                iconColor: 'bg-orange-500',
+                type: 'multi',
+                description: '多选，可自由选择多个加分项',
+                options: [
+                    { id: 'bonusEnglish', name: '英语能力', points: 5, extra: '四级/六级/雅思/托福' },
+                    { id: 'bonusInfluence', name: '技术影响力', points: 6, extra: 'GitHub高Star/技术演讲/社区活跃' },
+                    { id: 'bonusHonor', name: '竞赛荣誉', points: 6, extra: '省级/国家级/国际级比赛获奖' },
+                    { id: 'bonusStartup', name: '创业经历', points: 6 },
+                    { id: 'bonusOverseas', name: '海外经历', points: 10 }
+                ]
+            }
+        };
+
+        const selectedSkills = new Set();
+
+        function initSkillTree() {
+            const container = document.getElementById('skillTree');
+            container.innerHTML = '';
+
+            Object.entries(skillTree).forEach(([key, category]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-card';
+                categoryDiv.id = `category-${key}`;
+
+                const isMulti = category.type === 'multi';
+                const hasChildren = category.children && Object.keys(category.children).length > 0;
+
+                let optionsHTML = '';
+
+                if (hasChildren) {
+                    let childrenHTML = '';
+                    Object.entries(category.children).forEach(([childKey, child]) => {
+                        let childOptionsHTML = '';
+                        child.options.forEach(option => {
+                            const requiresText = option.requires ? ` <span class="text-xs text-amber-600">(依赖: ${getOptionName(option.requires)})</span>` : '';
+                            const extraText = option.extra ? `<span class="text-xs text-gray-400 ml-1">${option.extra}</span>` : '';
+                            
+                            childOptionsHTML += `
+                                <div class="skill-option border border-gray-200 rounded-lg p-3 flex items-center justify-between ${isMulti ? '' : 'cursor-pointer'}"
+                                     id="option-${option.id}"
+                                     data-points="${option.points}"
+                                     data-id="${option.id}"
+                                     data-category="${key}"
+                                     data-requires="${option.requires || ''}"
+                                     ${isMulti ? `onclick="toggleSkill('${option.id}', '${key}')"` : `onclick="selectSingleOption('${option.id}', '${key}')"`}>
+                                    <div class="flex items-center flex-1">
+                                        ${isMulti ? `
+                                            <div class="checkbox-custom mr-3 ${selectedSkills.has(option.id) ? 'checked' : ''}" onclick="event.stopPropagation(); toggleSkill('${option.id}', '${key}')">
+                                                <i class="fas fa-check text-white text-xs ${selectedSkills.has(option.id) ? '' : 'hidden'}"></i>
+                                            </div>
+                                        ` : `
+                                            <div class="radio-custom mr-3 ${selectedSkills.has(option.id) ? 'checked' : ''}">
+                                            </div>
+                                        `}
+                                        <span class="font-medium text-gray-700">${option.name}</span>
+                                        ${extraText}
+                                        ${requiresText}
+                                    </div>
+                                    <span class="text-sm font-semibold ml-3 ${option.points >= 0 ? 'positive-points' : 'negative-points'}">
+                                        ${option.points >= 0 ? '+' : ''}${option.points}点
+                                    </span>
+                                </div>
+                            `;
+                        });
+
+                        childrenHTML += `
+                            <div class="pl-6 py-1">
+                                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                                    <i class="fas fa-folder-open text-gray-400 mr-1"></i>${child.name}
+                                </div>
+                                <div class="space-y-1">
+                                    ${childOptionsHTML}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    optionsHTML = `
+                        <div class="tree-children px-4 pb-4" id="children-${key}">
+                            ${childrenHTML}
+                        </div>
+                    `;
+                } else if (category.options) {
+                    category.options.forEach(option => {
+                        const extraText = option.extra ? '<span class="text-xs text-gray-400 ml-2">' + option.extra + '</span>' : '';
+                        const descText = option.desc ? '<span class="text-xs text-gray-500 ml-2">(' + option.desc + ')</span>' : '';
+                        
+                        if (isMulti) {
+                            optionsHTML += `
+                                <div class="skill-option border border-gray-200 rounded-lg p-3 flex items-center justify-between"
+                                     id="option-${option.id}"
+                                     data-points="${option.points}"
+                                     data-id="${option.id}"
+                                     data-category="${key}">
+                                    <div class="flex items-center flex-1" onclick="event.stopPropagation(); toggleSkill('${option.id}', '${key}')">
+                                        <div class="checkbox-custom mr-3 ${selectedSkills.has(option.id) ? 'checked' : ''}" onclick="event.stopPropagation(); toggleSkill('${option.id}', '${key}')">
+                                            <i class="fas fa-check text-white text-xs ${selectedSkills.has(option.id) ? '' : 'hidden'}"></i>
+                                        </div>
+                                        <span class="font-medium text-gray-700">${option.name}</span>
+                                        ${descText}
+                                        ${extraText}
+                                    </div>
+                                    <span class="text-sm font-semibold ml-3 ${option.points >= 0 ? 'positive-points' : 'negative-points'}">
+                                        ${option.points >= 0 ? '+' : ''}${option.points}点
+                                    </span>
+                                </div>
+                            `;
+                        } else {
+                            optionsHTML += `
+                                <div class="skill-option border border-gray-200 rounded-lg p-3 flex items-center justify-between cursor-pointer"
+                                     id="option-${option.id}"
+                                     data-points="${option.points}"
+                                     data-id="${option.id}"
+                                     data-category="${key}"
+                                     onclick="selectSingleOption('${option.id}', '${key}')">
+                                    <div class="flex items-center flex-1">
+                                        <div class="radio-custom mr-3 ${selectedSkills.has(option.id) ? 'checked' : ''}">
+                                        </div>
+                                        <span class="font-medium text-gray-700">${option.name}</span>
+                                        ${descText}
+                                        ${extraText}
+                                    </div>
+                                    <span class="text-sm font-semibold ml-3 ${option.points >= 0 ? 'positive-points' : 'negative-points'}">
+                                        ${option.points >= 0 ? '+' : ''}${option.points}点
+                                    </span>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    optionsHTML = `
+                        <div class="tree-children px-4 pb-4" id="children-${key}">
+                            <div class="space-y-1">
+                                ${optionsHTML}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const totalCategoryPoints = calculateCategoryPoints(key);
+                const iconHTML = `<i class="fas ${category.icon} text-white text-sm"></i>`;
+
+                categoryDiv.innerHTML = `
+                    <div class="category-header" onclick="toggleCategory('${key}')">
+                        <div class="flex items-center">
+                            <div class="tree-toggle mr-3" id="toggle-${key}">
+                                <i class="fas fa-chevron-right text-gray-400"></i>
+                            </div>
+                            <div class="tree-icon ${category.iconColor}">
+                                ${iconHTML}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800">${category.name}</h3>
+                                <p class="text-xs text-gray-500">${category.description}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-sm font-semibold ${totalCategoryPoints >= 0 ? 'positive-points' : 'negative-points'}" id="category-points-${key}">
+                                ${totalCategoryPoints >= 0 ? '+' : ''}${totalCategoryPoints}点
+                            </span>
+                            <i class="fas fa-chevron-down text-gray-400 ml-3"></i>
+                        </div>
+                    </div>
+                    ${optionsHTML}
+                `;
+
+                container.appendChild(categoryDiv);
+            });
+
+            updateUI();
+        }
+
+        function getOptionName(optionId) {
+            const allCategories = [...Object.values(skillTree), ...Object.values(skillTree).flatMap(c => c.children ? Object.values(c.children) : [])];
+            for (const category of allCategories) {
+                if (category.options) {
+                    const option = category.options.find(o => o.id === optionId);
+                    if (option) return option.name;
+                }
+            }
+            return optionId;
+        }
+
+        function calculateCategoryPoints(categoryKey) {
+            let total = 0;
+            const category = skillTree[categoryKey];
+            
+            if (category.options) {
+                category.options.forEach(opt => {
+                    if (selectedSkills.has(opt.id)) {
+                        total += opt.points;
+                    }
+                });
+            }
+            
+            if (category.children) {
+                Object.values(category.children).forEach(child => {
+                    child.options.forEach(opt => {
+                        if (selectedSkills.has(opt.id)) {
+                            total += opt.points;
+                        }
+                    });
+                });
+            }
+            
+            return total;
+        }
+
+        function toggleCategory(key) {
+            const toggle = document.getElementById(`toggle-${key}`);
+            const children = document.getElementById(`children-${key}`);
+            
+            if (toggle && children) {
+                toggle.classList.toggle('expanded');
+                children.classList.toggle('collapsed');
+            }
+        }
+
+        function selectSingleOption(optionId, categoryKey) {
+            const category = skillTree[categoryKey];
+            
+            category.options.forEach(opt => {
+                selectedSkills.delete(opt.id);
+            });
+            
+            selectedSkills.add(optionId);
+            
+            updateUI();
+        }
+
+        function toggleSkill(optionId, categoryKey) {
+            if (selectedSkills.has(optionId)) {
+                selectedSkills.delete(optionId);
+            } else {
+                if (checkDependencies(optionId)) {
+                    selectedSkills.add(optionId);
+                } else {
+                    showNotification('前置技能未满足！', 'error');
+                    return;
+                }
+            }
+            
+            updateUI();
+        }
+
+        function checkDependencies(optionId) {
+            const allCategories = [skillTree.tech, skillTree.project];
+            
+            for (const category of allCategories) {
+                if (category.children) {
+                    for (const child of Object.values(category.children)) {
+                        const option = child.options.find(o => o.id === optionId);
+                        if (option && option.requires) {
+                            if (!selectedSkills.has(option.requires)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        function calculateTotalPoints() {
+            let total = 0;
+            
+            Object.keys(skillTree).forEach(key => {
+                total += calculateCategoryPoints(key);
+            });
+            
+            return total;
+        }
+
+        function updateUI() {
+            const totalUsed = calculateTotalPoints();
+            remainingPoints = TOTAL_POINTS - totalUsed;
+            
+            document.getElementById('remainingPoints').textContent = remainingPoints;
+            document.getElementById('usedPoints').textContent = Math.abs(totalUsed);
+            
+            const progressPercent = Math.max(0, Math.min(100, (remainingPoints / TOTAL_POINTS) * 100));
+            document.getElementById('pointProgress').style.width = progressPercent + '%';
+            
+            if (remainingPoints < 0) {
+                document.getElementById('remainingPoints').classList.add('negative-points');
+                document.getElementById('remainingPoints').classList.remove('text-primary');
+            } else {
+                document.getElementById('remainingPoints').classList.remove('negative-points');
+                document.getElementById('remainingPoints').classList.add('text-primary');
+            }
+
+            Object.keys(skillTree).forEach(key => {
+                const points = calculateCategoryPoints(key);
+                const pointsEl = document.getElementById(`category-points-${key}`);
+                if (pointsEl) {
+                    pointsEl.textContent = `${points >= 0 ? '+' : ''}${points}点`;
+                    pointsEl.className = `text-sm font-semibold ${points >= 0 ? 'positive-points' : 'negative-points'}`;
+                }
+            });
+
+            document.querySelectorAll('.skill-option').forEach(el => {
+                const optionId = el.dataset.id;
+                const requires = el.dataset.requires;
+                
+                if (selectedSkills.has(optionId)) {
+                    el.classList.add('selected');
+                    if (el.querySelector('.checkbox-custom')) {
+                        el.querySelector('.checkbox-custom').classList.add('checked');
+                        el.querySelector('.checkbox-custom i').classList.remove('hidden');
+                    }
+                    if (el.querySelector('.radio-custom')) {
+                        el.querySelector('.radio-custom').classList.add('checked');
+                    }
+                } else {
+                    el.classList.remove('selected');
+                    if (el.querySelector('.checkbox-custom')) {
+                        el.querySelector('.checkbox-custom').classList.remove('checked');
+                        el.querySelector('.checkbox-custom i').classList.add('hidden');
+                    }
+                    if (el.querySelector('.radio-custom')) {
+                        el.querySelector('.radio-custom').classList.remove('checked');
+                    }
+                }
+                
+                if (requires && !selectedSkills.has(requires)) {
+                    el.classList.add('dependency-locked');
+                } else {
+                    el.classList.remove('dependency-locked');
+                }
+            });
+        }
+
+        function selectGender(gender) {
+            selectedGender = gender;
+            const maleEl = document.getElementById('genderMale');
+            const femaleEl = document.getElementById('genderFemale');
+            
+            if (gender === '男') {
+                maleEl.classList.add('border-primary', 'bg-blue-50');
+                maleEl.classList.remove('border-gray-200');
+                femaleEl.classList.remove('border-primary', 'bg-blue-50');
+                femaleEl.classList.add('border-gray-200');
+            } else {
+                femaleEl.classList.add('border-primary', 'bg-blue-50');
+                femaleEl.classList.remove('border-gray-200');
+                maleEl.classList.remove('border-primary', 'bg-blue-50');
+                maleEl.classList.add('border-gray-200');
+            }
+        }
+
+        function updateAvatarPreview() {
+            playerName = document.getElementById('playerName').value.trim();
+            const initial = playerName.charAt(0).toUpperCase() || '?';
+            document.getElementById('avatarInitial').textContent = initial;
+        }
+
+        function resetAll() {
+            selectedSkills.clear();
+            initSkillTree();
+            showNotification('已重置所有属性', 'success');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in ${
+                type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+            }`;
+            notification.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'} mr-2"></i>${message}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
+        }
+
+        function startGame() {
+            playerName = document.getElementById('playerName').value.trim();
+            
+            if (!playerName) {
+                showNotification('请输入角色名称', 'error');
+                return;
+            }
+
+            if (remainingPoints > 0) {
+                if (!confirm(`您还有 ${remainingPoints} 点未分配的属性点，确定开始游戏？\n\n不足的能力值可能会影响您的求职成功率。`)) {
+                    return;
+                }
+            }
+
+            if (remainingPoints < 0) {
+                showNotification('属性点超出上限！请减少选择。', 'error');
+                return;
+            }
+
+            const characterData = {
+                name: playerName,
+                gender: selectedGender,
+                job: 'agent',
+                jobName: 'Agent工程师',
+                skills: Array.from(selectedSkills),
+                totalPoints: TOTAL_POINTS,
+                usedPoints: calculateTotalPoints(),
+                remainingPoints: remainingPoints,
+                createdAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('playerCharacter', JSON.stringify(characterData));
+            localStorage.setItem('playerName', playerName);
+            localStorage.setItem('playerGender', selectedGender);
+            localStorage.setItem('playerJob', 'agent');
+            localStorage.setItem('playerJobName', 'Agent工程师');
+            localStorage.setItem('playerSkills', JSON.stringify(Array.from(selectedSkills)));
+
+            showNotification('角色创建成功！', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+
+        document.getElementById('playerName').addEventListener('input', updateAvatarPreview);
+
+        initSkillTree();
+
+        Object.keys(skillTree).forEach(key => {
+            if (skillTree[key].children) {
+                toggleCategory(key);
+            }
+        });
+    </script>
+</body>
+</html>

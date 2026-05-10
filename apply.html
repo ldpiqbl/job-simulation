@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投递简历 - 破壁纪元</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4169E1',
+                        secondary: '#2C3E50',
+                        accent: '#E74C3C',
+                        background: '#F5F7FA',
+                        card: '#FFFFFF',
+                        border: '#E8E8E8'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+        * {
+            font-family: 'Noto Sans SC', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #4169E1 0%, #6B8DD6 100%);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.2);
+            border-color: #4169E1;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 200px;
+        }
+
+        .skill-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 4px;
+        }
+
+        .skill-tag.python { background: #3776ab; color: white; }
+        .skill-tag.rust { background: #ce422b; color: white; }
+        .skill-tag.java { background: #ed8b00; color: white; }
+        .skill-tag.go { background: #00add8; color: white; }
+        .skill-tag.default { background: #e5e7eb; color: #374151; }
+
+        .company-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .company-badge.micro { background: #fef3c7; color: #92400e; }
+        .company-badge.sme { background: #dbeafe; color: #1e40af; }
+        .company-badge.unicorn { background: #fce7f3; color: #9d174d; }
+        .company-badge.big { background: #fee2e2; color: #991b1b; }
+        .company-badge.foreign { background: #e0e7ff; color: #3730a3; }
+        .company-badge.chaos { background: #fef9c3; color: #854d0e; }
+        .company-badge.screw { background: #f3f4f6; color: #374151; }
+        .company-badge.pie { background: #fdf2f8; color: #9d174d; }
+        .company-badge.throw { background: #fff7ed; color: #9a3412; }
+        .company-badge.pension { background: #ecfdf5; color: #047857; }
+
+        .jd-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .jd-section-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .jd-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .jd-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        .jd-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #6366f1;
+            font-weight: bold;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4169E1 0%, #6B8DD6 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(65, 105, 225, 0.4);
+        }
+
+        .sidebar-sticky {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .ability-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+
+        .ability-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* 小助手样式 */
+        .assistant-toggle {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .assistant-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .assistant-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 11px;
+            background: #ef4444;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+        }
+
+        .assistant-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 380px;
+            height: 520px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 99;
+        }
+
+        .assistant-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            color: white;
+        }
+
+        .assistant-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: #f9fafb;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-ai {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message-ai .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .message-user .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message-ai .message-content {
+            background: white;
+            color: #374151;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .message-user {
+            justify-content: flex-end;
+        }
+
+        .message-user .message-content {
+            background: #10b981;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .assistant-input-area {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+
+        .assistant-input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .assistant-input:focus {
+            border-color: #667eea;
+        }
+
+        .assistant-send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .assistant-send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .assistant-panel {
+                width: calc(100% - 48px);
+                right: 24px;
+                left: 24px;
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧主要内容 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+                    <div class="gradient-bg p-6 text-center">
+                        <h1 class="text-2xl font-bold text-white mb-1">
+                            <i class="fas fa-file-alt mr-2"></i>编写简历
+                        </h1>
+                        <p class="text-blue-100 text-sm">完善您的求职简历，准备投递目标职位</p>
+                    </div>
+
+                    <div class="p-6" id="jobInfo">
+                        <!-- 完整JD信息 -->
+                    </div>
+
+                    <div class="p-6 border-t border-gray-100">
+                        <form id="resumeForm" onsubmit="submitResume(event)">
+                            <div class="space-y-6">
+                                <!-- 基本信息 -->
+                                <div>
+                                    <h3 class="text-lg font-bold text-secondary mb-4 flex items-center">
+                                        <i class="fas fa-user mr-2 text-primary"></i>基本信息
+                                    </h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                <i class="fas fa-id-badge mr-1 text-gray-400"></i>姓名
+                                            </label>
+                                            <input type="text" id="playerName" 
+                                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl bg-gray-50"
+                                                readonly>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                <i class="fas fa-venus-mars mr-1 text-gray-400"></i>性别
+                                            </label>
+                                            <input type="text" id="playerGender" 
+                                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl bg-gray-50"
+                                                readonly>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                <i class="fas fa-envelope mr-1 text-gray-400"></i>联系方式
+                                            </label>
+                                            <input type="email" value="player@mail.com" 
+                                                class="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl bg-gray-100 cursor-not-allowed"
+                                                readonly>
+                                            <p class="text-xs text-gray-400 mt-1">* 系统默认联系方式，无需修改</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 自我介绍 -->
+                                <div>
+                                    <h3 class="text-lg font-bold text-secondary mb-4 flex items-center">
+                                        <i class="fas fa-pen mr-2 text-purple-500"></i>自我介绍
+                                    </h3>
+                                    <div>
+                                        <textarea id="selfIntro" 
+                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                                            placeholder="请详细介绍您的技术栈、项目经验、工作经历等，让招聘方更了解您的实力..."></textarea>
+                                        <p class="text-xs text-gray-400 mt-2">* 这是展现您个人特色的机会，建议详细描述</p>
+                                    </div>
+                                </div>
+
+                                <!-- 提交按钮 -->
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                                    <button type="button" onclick="goBack()" 
+                                        class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors">
+                                        <i class="fas fa-arrow-left mr-2"></i>返回职位列表
+                                    </button>
+                                    <button type="submit" 
+                                        class="btn-primary text-white font-bold py-3 px-8 rounded-xl shadow-lg">
+                                        <i class="fas fa-paper-plane mr-2"></i>投递简历
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧角色信息 -->
+            <div class="lg:col-span-1">
+                <div class="sidebar-sticky">
+                    <div class="bg-white rounded-2xl shadow-xl p-6 animate-fade-in-up">
+                        <div class="text-center mb-6">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4" id="sidebarAvatar">
+                                ?
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800" id="sidebarName">玩家</h3>
+                            <p class="text-gray-500 text-sm" id="sidebarJob">Agent工程师</p>
+                        </div>
+
+                        <!-- 属性概览 -->
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-chart-pie mr-2 text-primary"></i>属性概览
+                            </h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">技术能力</span>
+                                        <span id="techCount" class="text-gray-800 font-medium">0/16</span>
+                                    </div>
+                                    <div class="ability-bar">
+                                        <div id="techBar" class="ability-fill bg-green-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">项目经历</span>
+                                        <span id="projectCount" class="text-gray-800 font-medium">0/9</span>
+                                    </div>
+                                    <div class="ability-bar">
+                                        <div id="projectBar" class="ability-fill bg-yellow-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">加分项</span>
+                                        <span id="bonusCount" class="text-gray-800 font-medium">0/5</span>
+                                    </div>
+                                    <div class="ability-bar">
+                                        <div id="bonusBar" class="ability-fill bg-orange-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">学历</span>
+                                        <span id="eduLevel" class="text-gray-800 font-medium">未选择</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">心理特质</span>
+                                        <span id="psyLevel" class="text-gray-800 font-medium">未选择</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">身体特质</span>
+                                        <span id="phyLevel" class="text-gray-800 font-medium">未选择</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 技能标签 -->
+                        <div class="mb-6">
+                            <h4 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-code mr-2 text-green-500"></i>已获得技能
+                            </h4>
+                            <div id="sidebarSkills" class="flex flex-wrap gap-2">
+                                <p class="text-gray-400 text-sm italic">暂无技能</p>
+                            </div>
+                        </div>
+
+                        <!-- 目标职位匹配 -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                            <h4 class="font-semibold text-blue-800 mb-3 flex items-center">
+                                <i class="fas fa-bullseye mr-2"></i>当前目标
+                            </h4>
+                            <div id="targetJobInfo">
+                                <p class="text-sm text-gray-500">未选择目标职位</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 小助手悬浮按钮 -->
+    <div class="assistant-toggle" id="assistantToggle" onclick="toggleAssistant()">
+        <i class="fas fa-comments text-xl"></i>
+        <div class="assistant-badge" id="assistantBadge" style="display: none;">0</div>
+    </div>
+
+    <!-- 小助手面板 -->
+    <div class="assistant-panel hidden" id="assistantPanel">
+        <div class="assistant-header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">求职小助手</h3>
+                        <p class="text-xs text-white/70">随时为您解答</p>
+                    </div>
+                </div>
+                <button onclick="toggleAssistant()" class="text-white/70 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="assistant-messages" id="assistantMessages">
+            <!-- 消息会在这里动态添加 -->
+        </div>
+        
+        <div class="assistant-input-area">
+            <input type="text" class="assistant-input" id="assistantInput" placeholder="输入您的问题..." onkeypress="handleAssistantInput(event)">
+            <button class="assistant-send-btn" onclick="sendAssistantMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // 小助手状态
+        let assistantOpen = false;
+        let unreadCount = 0;
+        let messages = [];
+
+        // 小助手机器人名称
+        const assistantName = '求职小助手';
+
+        // 切换小助手面板
+        function toggleAssistant() {
+            assistantOpen = !assistantOpen;
+            const panel = document.getElementById('assistantPanel');
+            const toggle = document.getElementById('assistantToggle');
+            
+            if (assistantOpen) {
+                panel.classList.remove('hidden');
+                toggle.querySelector('.fa-comments').classList.remove('fa-comments');
+                toggle.querySelector('.fa-times');
+                document.getElementById('assistantBadge').style.display = 'none';
+                unreadCount = 0;
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        // 添加消息
+        function addAssistantMessage(content, isUser = false) {
+            const container = document.getElementById('assistantMessages');
+            const messageDiv = document.createElement('div');
+            
+            if (isUser) {
+                messageDiv.className = 'message message-user';
+                messageDiv.innerHTML = `
+                    <div class="message-content">${content}</div>
+                    <div class="avatar">${localStorage.getItem('playerName')?.charAt(0) || '你'}</div>
+                `;
+            } else {
+                messageDiv.className = 'message message-ai';
+                messageDiv.innerHTML = `
+                    <div class="avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">${content}</div>
+                `;
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            messages.push({ content, isUser });
+        }
+
+        // 显示打字指示器
+        function showTypingIndicator() {
+            const container = document.getElementById('assistantMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'message message-ai';
+            typingDiv.innerHTML = `
+                <div class="avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 隐藏打字指示器
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        // 处理输入
+        function handleAssistantInput(event) {
+            if (event.key === 'Enter') {
+                sendAssistantMessage();
+            }
+        }
+
+        // 发送消息
+        function sendAssistantMessage() {
+            const input = document.getElementById('assistantInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addAssistantMessage(message, true);
+            input.value = '';
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = processAssistantQuery(message);
+                addAssistantMessage(response);
+            }, 1000);
+        }
+
+        // 处理查询（预留接口）
+        function processAssistantQuery(query) {
+            // TODO: 接入真实的AI对话模型
+            // const response = await callAI API(query);
+            // return response;
+            
+            // 临时使用关键词匹配回复
+            const q = query.toLowerCase();
+            
+            if (q.includes('简历') || q.includes('自我介绍')) {
+                return '简历中的自我介绍非常重要！建议从以下几个方面入手：<br><br>1. <strong>技术栈</strong>：列出你最擅长的编程语言和工具<br>2. <strong>项目经验</strong>：描述1-2个最有代表性的项目<br>3. <strong>个人优势</strong>：突出你的独特价值<br><br>记住，内容要真实具体，避免空泛的形容词！';
+            }
+            
+            if (q.includes('薪资') || q.includes('工资')) {
+                return '薪资谈判是求职中的重要环节。建议：<br><br>1. 先了解市场行情<br>2. 明确自己的底线<br>3. 展示自己的价值<br>4. 留有谈判空间<br><br>不要太急于谈薪资，先展示你的能力！';
+            }
+            
+            if (q.includes('面试')) {
+                return '面试准备很关键！建议：<br><br>1. 熟读JD，了解岗位职责<br>2. 准备STAR法则描述项目经历<br>3. 复习核心技术点<br>4. 准备一些反问面试官的问题<br><br>祝你面试顺利！';
+            }
+            
+            if (q.includes('公司') || q.includes('这家')) {
+                return '选公司很重要！建议关注：<br><br>1. <strong>发展空间</strong>：能否学到东西<br>2. <strong>团队氛围</strong>：直属领导如何<br>3. <strong>薪资福利</strong>：是否匹配预期<br>4. <strong>稳定性</strong>：公司财务状况<br><br>大公司有大公司的好处，小公司也有小公司的机会！';
+            }
+            
+            if (q.includes('谢谢')) {
+                return '不客气！有问题随时问我～ 😊';
+            }
+            
+            return '我理解你的问题。作为求职小助手，我可以帮你解答关于简历、面试、薪资等方面的问题。你有什么具体想了解的吗？';
+        }
+
+        // 初始化小助手欢迎语
+        function initAssistant() {
+            addAssistantMessage('👋 欢迎来到简历投递页面！');
+            
+            setTimeout(() => {
+                addAssistantMessage('请仔细阅读左侧的职位描述，确保自己符合基本要求后再投递简历。');
+            }, 500);
+            
+            setTimeout(() => {
+                addAssistantMessage('填写自我介绍时，建议突出你的技术栈和项目经验。内容要真实具体哦！');
+            }, 1000);
+        }
+
+        // 完整的职位数据（包含JD）
+        const jobsData = [
+            {
+                id: 'job-micro-1',
+                company: '光年AI工作室',
+                companyType: '微型企业',
+                companyTypeClass: 'micro',
+                title: 'AI应用开发工程师',
+                salary: { min: 8, max: 15 },
+                location: '远程办公',
+                tags: ['Python', 'LLM', '全栈'],
+                jd: {
+                    summary: '我们是光年AI工作室，一个专注于AI应用的小团队。目前正在寻找一位有热情的AI应用开发工程师，一起打造有创意的AI产品。如果你喜欢灵活的工作方式，对AI应用有独特的想法，欢迎加入我们！',
+                    responsibilities: [
+                        '独立负责AI应用的设计与开发',
+                        '快速将AI能力产品化，包括但不限于对话系统、智能助手等',
+                        '持续优化产品体验，提升用户满意度',
+                        '参与产品需求讨论，从技术角度提供可行性建议'
+                    ],
+                    requirements: [
+                        '掌握Python编程，能够独立完成小项目开发',
+                        '有个人项目或开源项目经验，了解AI应用的基本原理',
+                        '对AI技术有好奇心，愿意学习新技术',
+                        '良好的沟通能力和自我驱动能力'
+                    ],
+                    bonus: [
+                        '有Prompt Engineering经验，了解如何优化AI输出',
+                        '有RAG（检索增强生成）实际应用经验',
+                        '有技术博客写作或社区活跃经历',
+                        '有创业想法或经历'
+                    ],
+                    benefits: [
+                        '远程办公，时间自由',
+                        '扁平化管理，直接与创始人沟通',
+                        '技术氛围浓厚，可以尝试各种新技术',
+                        '根据贡献可获得期权'
+                    ]
+                }
+            },
+            {
+                id: 'job-sme-1',
+                company: '数智未来科技',
+                companyType: '中小企业',
+                companyTypeClass: 'sme',
+                title: 'Python开发工程师（AI方向）',
+                salary: { min: 12, max: 22 },
+                location: '杭州·滨江区',
+                tags: ['Python', 'FastAPI', 'RAG'],
+                isHot: true,
+                jd: {
+                    summary: '数智未来科技是一家专注于企业智能化转型的科技公司，目前已完成B轮融资。我们正在寻找Python开发工程师加入AI产品团队，一起打造企业级AI解决方案。',
+                    responsibilities: [
+                        '负责AI应用后端服务的开发与维护',
+                        '设计和实现RAG（检索增强生成）系统',
+                        '优化AI应用的性能和稳定性',
+                        '编写技术文档，支持产品上线和维护'
+                    ],
+                    requirements: [
+                        '本科及以上学历，计算机相关专业优先',
+                        '精通Python，熟悉FastAPI或Django等Web框架',
+                        '有AI应用开发经验，了解LLM基本原理',
+                        '熟悉关系型数据库，有Redis使用经验者优先'
+                    ],
+                    bonus: [
+                        '有LangChain或其他Agent框架使用经验',
+                        '有容器化部署经验（Docker/K8s）',
+                        '有Prompt Engineering实际项目经验',
+                        '英语良好，能阅读英文技术文档'
+                    ],
+                    benefits: [
+                        '竞争力的薪资，14薪制',
+                        '五险一金，带薪年假',
+                        '技术分享氛围浓厚，鼓励学习新技术',
+                        '弹性工作制，不打卡'
+                    ]
+                }
+            },
+            {
+                id: 'job-unicorn-1',
+                company: '迅脑智能',
+                companyType: '独角兽',
+                companyTypeClass: 'unicorn',
+                title: 'AI Agent工程师',
+                salary: { min: 25, max: 45 },
+                location: '深圳·南山区',
+                tags: ['Agent', 'RAG', 'Multi-Agent'],
+                isHot: true,
+                jd: {
+                    summary: '迅脑智能是一家专注于通用人工智能的独角兽企业，致力于打造下一代AI Agent平台。我们的目标是用AI Agent重塑企业工作方式。目前已完成C轮融资，估值超50亿美元。',
+                    responsibilities: [
+                        '设计和实现企业级AI Agent系统',
+                        '开发Multi-Agent协作框架，支持复杂任务分解与执行',
+                        '优化Agent的规划、推理和工具使用能力',
+                        '参与Agent平台架构设计，解决技术挑战'
+                    ],
+                    requirements: [
+                        '本科及以上学历，计算机、数学、物理等相关专业',
+                        '精通Python，有大型项目开发经验',
+                        '深入理解LLM原理，熟悉至少一种LLM API',
+                        '有RAG系统开发经验，熟悉向量数据库',
+                        '了解Agent核心概念，包括规划、记忆、工具调用'
+                    ],
+                    bonus: [
+                        '有Agent框架开发经验（LangChain、AutoGPT等）',
+                        '有Multi-Agent系统开发经验',
+                        '有Fine-tuning经验，能够微调LLM模型',
+                        '有NLP、CV等AI领域研究经验',
+                        '在GitHub上有高星开源项目或顶会论文'
+                    ],
+                    benefits: [
+                        '极具竞争力的薪资，年度调薪',
+                        '期权激励，与公司共同成长',
+                        '免费三餐，下午茶，不打卡',
+                        '顶配MacBook Pro + 外接显示器',
+                        '丰富的技术分享和培训资源'
+                    ]
+                }
+            },
+            {
+                id: 'job-big-1',
+                company: '云智科技',
+                companyType: '大厂',
+                companyTypeClass: 'big',
+                title: '高级AI工程师 — Agent平台方向',
+                salary: { min: 35, max: 60 },
+                location: '北京·海淀区',
+                tags: ['分布式', 'K8s', 'Agent'],
+                isHot: true,
+                jd: {
+                    summary: '云智科技是全球领先的云计算和人工智能公司，为数百万企业提供云服务。我们的AI Agent平台团队正在打造下一代企业智能化基础设施。现在邀请优秀人才加入，一起用技术改变世界。',
+                    responsibilities: [
+                        '设计和实现大规模AI Agent平台的架构',
+                        '开发Agent运行时引擎，支持高并发、低延迟的Agent执行',
+                        '设计Multi-Agent协作协议和通信机制',
+                        '优化Agent系统的资源调度和弹性伸缩',
+                        '主导技术难题攻关，制定技术规范'
+                    ],
+                    requirements: [
+                        '211本科及以上学历，计算机相关专业',
+                        '精通Python/Golang，具备大型分布式系统开发经验',
+                        '熟悉Kubernetes生态，了解容器编排原理',
+                        '深入理解LLM和Agent技术，有实际项目经验',
+                        '熟悉分布式系统设计模式，有高可用系统设计经验'
+                    ],
+                    bonus: [
+                        '有AI Agent平台或框架开发经验',
+                        '有大规模LLM部署和优化经验',
+                        '有Fine-tuning或模型训练经验',
+                        '在AI领域有研究成果（论文、专利）',
+                        '有ACM竞赛获奖或开源项目贡献经历'
+                    ],
+                    benefits: [
+                        '行业顶薪，股票期权',
+                        '七险一金，商业医疗险',
+                        '免费三餐，健身房',
+                        '带薪年假，病假',
+                        '完善的晋升通道和培训体系'
+                    ]
+                }
+            },
+            {
+                id: 'job-foreign-1',
+                company: 'GlobalAI',
+                companyType: '外企',
+                companyTypeClass: 'foreign',
+                title: 'AI Engineer — Agent Platform Team',
+                salary: { min: 30, max: 55 },
+                location: '上海·浦东新区',
+                tags: ['English', 'AWS', 'Agent'],
+                jd: {
+                    summary: 'GlobalAI is a Fortune 500 technology company leading the global AI revolution. Our Agent Platform team is building next-generation AI agent infrastructure. We are looking for talented AI Engineers to join our diverse and inclusive team.',
+                    responsibilities: [
+                        'Design and implement AI agent systems for enterprise customers',
+                        'Develop multi-agent collaboration frameworks',
+                        'Optimize agent performance and scalability on cloud platforms',
+                        'Collaborate with global teams across US, Europe, and Asia',
+                        'Contribute to open-source projects and technical publications'
+                    ],
+                    requirements: [
+                        'Excellent English communication skills (CET-6/IELTS 6.5+/TOEFL 90+)',
+                        'Bachelor\'s degree or above in Computer Science or related field',
+                        'Proficient in Python, with experience in AI application development',
+                        'Understanding of LLM principles and agent architectures',
+                        'Experience with cloud platforms (AWS/GCP/Azure)'
+                    ],
+                    bonus: [
+                        'Experience with agent frameworks (LangChain, AutoGen, etc.)',
+                        'Familiarity with distributed systems and microservices',
+                        'Contributions to open-source AI projects',
+                        'International work or study experience',
+                        'Publications in AI conferences or journals'
+                    ],
+                    benefits: [
+                        'Competitive salary + annual bonus',
+                        'Stock options',
+                        'International work environment',
+                        'Flexible working hours',
+                        'Premium health insurance',
+                        'Learning and development budget',
+                        '25 days paid vacation'
+                    ]
+                }
+            },
+            {
+                id: 'job-chaos-1',
+                company: '星辰万维科技',
+                companyType: '混乱型',
+                companyTypeClass: 'chaos',
+                title: 'AI全栈开发工程师',
+                salary: { min: 15, max: 25 },
+                location: '成都·高新区',
+                tags: ['全栈', 'AI', '多语言'],
+                jd: {
+                    summary: '星辰万维科技是一家业务快速发展的创业公司，我们相信AI可以改变一切。目前正处于高速发展期，需要能够handle一切的"全栈战士"。如果你喜欢挑战，想要快速成长，欢迎加入我们的"草台班子"！',
+                    responsibilities: [
+                        '从前端到后端，从数据库到AI模型，全部都要会',
+                        '用AI改造公司各种业务流程',
+                        '随时待命，接受任何任务',
+                        '偶尔需要出差（公司业务遍布全国）',
+                        '写代码、做PPT、见客户、培训用户，什么都可能'
+                    ],
+                    requirements: [
+                        '本科及以上学历，专业不限',
+                        '会Python，最好也会Java/Go/JS其中之一',
+                        '懂数据库，最好也了解点AI',
+                        '自学能力强，因为没人能教你',
+                        '身体好，能加班，能接受不确定性'
+                    ],
+                    bonus: [
+                        '有全栈项目经验',
+                        '有AI项目经验',
+                        '有良好的自学能力',
+                        '有创业精神，能在混乱中生存'
+                    ],
+                    benefits: [
+                        '工资按时发（大概）',
+                        '可能没有年终奖（看情况）',
+                        '学到很多东西（真的）',
+                        '扁平化管理（因为没有层级）'
+                    ]
+                }
+            },
+            {
+                id: 'job-screw-1',
+                company: '鼎信金融科技',
+                companyType: '螺丝钉型',
+                companyTypeClass: 'screw',
+                title: 'AI对话系统开发工程师',
+                salary: { min: 15, max: 25 },
+                location: '北京·朝阳区',
+                tags: ['LangChain', 'Prompt', 'SOP'],
+                jd: {
+                    summary: '鼎信金融科技是一家专注于金融行业的软件服务商，为银行、保险等金融机构提供IT解决方案。我们的AI团队正在用对话系统改造传统客服。加入我们，你将成为这颗精密金融机器上的一颗稳定螺丝钉。',
+                    responsibilities: [
+                        '使用LangChain开发智能客服对话系统',
+                        '编写和优化Prompt，提升对话质量',
+                        '制定和维护SOP，确保对话流程标准化',
+                        '对接业务系统，完成对话系统的集成',
+                        '监控对话系统运行状态，处理异常'
+                    ],
+                    requirements: [
+                        '本科及以上学历，计算机相关专业',
+                        '精通Python，熟悉LangChain或其他Agent框架',
+                        '有Prompt Engineering实战经验',
+                        '了解对话系统基本原理',
+                        '有金融行业背景或对金融业务有了解者优先'
+                    ],
+                    bonus: [
+                        '有LangChain大型项目经验',
+                        '有金融行业IT系统开发经验',
+                        '有对话系统优化经验',
+                        '英语良好，能阅读英文文档'
+                    ],
+                    benefits: [
+                        '稳定的国企式工作环境',
+                        '五险一金，补充医疗',
+                        '年终奖（通常有）',
+                        '工作稳定，流程规范',
+                        '加班少（大多数时候）'
+                    ]
+                }
+            },
+            {
+                id: 'job-pie-1',
+                company: '元宇宙智能科技',
+                companyType: '画饼型',
+                companyTypeClass: 'pie',
+                title: 'AI Agent架构师（P7级别）',
+                salary: { min: 40, max: 70 },
+                location: '深圳·南山区',
+                tags: ['Agent', '架构', 'Multi-Agent'],
+                jd: {
+                    summary: '元宇宙智能科技是国内领先的元宇宙基础设施提供商，致力于用AI Agent技术赋能元宇宙数字人。我们的愿景是用Web3.0+AI重新定义互联网。如果你想参与定义下一个时代的互联网形态，欢迎加入我们！',
+                    responsibilities: [
+                        '设计基于AI Agent的元宇宙数字人架构',
+                        '主导Multi-Agent系统的技术选型和架构设计',
+                        '制定技术标准和开发规范',
+                        '攻克核心技术难题',
+                        '赋能团队，提升整体技术水平'
+                    ],
+                    requirements: [
+                        '本科及以上学历，5年以上工作经验',
+                        '精通Python，精通至少一门编译型语言',
+                        '深入理解Agent架构，有大型Agent系统设计经验',
+                        '有Multi-Agent协作系统开发经验',
+                        '有AI基础设施架构经验者优先'
+                    ],
+                    bonus: [
+                        '有元宇宙、Web3项目经验',
+                        '有AI平台架构设计经验',
+                        '有技术团队管理经验',
+                        '有AI领域创新成果',
+                        '211/985背景加分'
+                    ],
+                    benefits: [
+                        '高薪+期权（可能是空气）',
+                        '参与定义下一代互联网',
+                        '技术大牛云集',
+                        '扁平管理，弹性工作',
+                        '各种前沿技术随便玩'
+                    ]
+                }
+            },
+            {
+                id: 'job-throw-1',
+                company: '智慧城市集团',
+                companyType: '甩锅型',
+                companyTypeClass: 'throw',
+                title: 'AI中台开发工程师',
+                salary: { min: 18, max: 30 },
+                location: '杭州·西湖区',
+                tags: ['AI中台', '全栈', '出差'],
+                jd: {
+                    summary: '智慧城市集团是国内领先的城市数字化服务商，承担了多个城市的智慧城市项目建设。我们的AI中台团队需要一名能单打独斗的工程师，因为项目上可能只有你一个懂AI的人。欢迎有勇气的人来挑战！',
+                    responsibilities: [
+                        '作为AI中台核心开发，可能需要独立负责整个AI模块',
+                        '对接各种甲方需求，完成AI能力集成',
+                        '长期出差到项目所在地（可能60%时间出差）',
+                        '独立解决项目中遇到的所有AI技术问题',
+                        '编写各种项目文档和汇报材料'
+                    ],
+                    requirements: [
+                        '本科及以上学历，计算机相关专业',
+                        '精通Python，熟悉FastAPI或Flask',
+                        '有AI应用开发经验，了解RAG等常见AI能力',
+                        '会Java/Python后端开发，能独立完成后端服务',
+                        '有良好的沟通能力，能应对各种甲方'
+                    ],
+                    bonus: [
+                        '有AI中台或AI平台开发经验',
+                        '有项目现场开发经验',
+                        '有Fine-tuning实战经验',
+                        '有大型企业级项目经验',
+                        '有技术博客或分享经历'
+                    ],
+                    benefits: [
+                        '项目奖金（看项目）',
+                        '出差补贴（比较可观）',
+                        '锻炼综合能力',
+                        '接触各种行业',
+                        '可能有落户机会'
+                    ]
+                }
+            },
+            {
+                id: 'job-pension-1',
+                company: '华信软件',
+                companyType: '养老型',
+                companyTypeClass: 'pension',
+                title: '软件开发工程师',
+                salary: { min: 8, max: 15 },
+                location: '济南·历下区',
+                tags: ['Java', 'MySQL', '内部系统'],
+                jd: {
+                    summary: '华信软件是一家成立20年的传统软件企业，主要为本地企业提供IT服务。公司业务稳定，客户稳定，工作稳定。如果你想要一个稳定、没有KPI压力、能准点下班的工作，这里可能是你的选择。',
+                    responsibilities: [
+                        '维护和开发公司承接的企业内部系统',
+                        '使用Java/MySQL完成常见CRUD功能',
+                        '偶尔需要去客户现场进行系统培训',
+                        '编写开发文档和用户手册'
+                    ],
+                    requirements: [
+                        '大专及以上学历',
+                        '会Java，会MySQL',
+                        '能看懂别人写的代码',
+                        '有基础的问题排查能力'
+                    ],
+                    bonus: [
+                        '有Spring Boot经验',
+                        '有Oracle使用经验',
+                        '有传统行业IT经验',
+                        '本地人优先'
+                    ],
+                    benefits: [
+                        '稳定（非常稳定）',
+                        '不加班（真的不加班）',
+                        '五险一金',
+                        '工作轻松',
+                        '离家近（本地人优势）'
+                    ]
+                }
+            }
+        ];
+
+        // 获取技能名称
+        function getSkillName(skillId) {
+            const skillNames = {
+                'progPython': 'Python',
+                'progGo': 'Go',
+                'progJava': 'Java',
+                'progRust': 'Rust',
+                'aimlML': '机器学习基础',
+                'aimlDL': '深度学习基础',
+                'aimlNLP': 'NLP基础',
+                'llmPrompt': 'Prompt Engineering',
+                'llmRAG': 'RAG技术',
+                'llmFineTune': 'Fine-tuning',
+                'agentFramework': 'Agent框架',
+                'agentCore': 'Agent核心能力',
+                'agentMulti': 'Multi-Agent协作',
+                'engContainer': '容器化部署',
+                'engDistributed': '分布式系统',
+                'engAPI': 'API开发',
+                'projBasic': '课程/毕业设计',
+                'projOpenSource': '个人开源项目',
+                'projBlog': '技术博客/社区',
+                'projIntern': '普通实习',
+                'projBigCompany': '大厂实习',
+                'projCoreProject': '大厂核心项目',
+                'projPR': '开源贡献',
+                'projCompetition': '专业比赛获奖',
+                'projPaper': '顶会论文',
+                'bonusEnglish': '英语能力',
+                'bonusInfluence': '技术影响力',
+                'bonusHonor': '竞赛荣誉',
+                'bonusStartup': '创业经历',
+                'bonusOverseas': '海外经历',
+                'edu专科': '专科',
+                'edu普通本科': '普通本科',
+                'edu211': '211本科',
+                'edu985': '985本科',
+                'edu硕士': '硕士',
+                'psy玻璃心': '玻璃心',
+                'psy普通人': '普通人',
+                'psy压力爱好者': '压力爱好者',
+                'phy电量不足': '电量不足',
+                'phy普通人': '普通人',
+                'phy牛马体质': '牛马体质'
+            };
+            return skillNames[skillId] || skillId;
+        }
+
+        // 获取技能样式
+        function getSkillClass(skillId) {
+            if (skillId === 'progPython') return 'python';
+            if (skillId === 'progRust') return 'rust';
+            if (skillId === 'progJava') return 'java';
+            if (skillId === 'progGo') return 'go';
+            return 'default';
+        }
+
+        // 生成JD HTML
+        function generateJobDetailHTML(job) {
+            let jdHTML = '';
+
+            if (job.jd.summary) {
+                jdHTML += `
+                    <div class="jd-section">
+                        <div class="jd-section-title">
+                            <i class="fas fa-info-circle text-blue-500"></i>
+                            职位描述
+                        </div>
+                        <p class="text-gray-600 leading-relaxed">${job.jd.summary}</p>
+                    </div>
+                `;
+            }
+
+            if (job.jd.responsibilities && job.jd.responsibilities.length > 0) {
+                jdHTML += `
+                    <div class="jd-section">
+                        <div class="jd-section-title">
+                            <i class="fas fa-tasks text-indigo-500"></i>
+                            岗位职责
+                        </div>
+                        <ul class="jd-list">
+                            ${job.jd.responsibilities.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (job.jd.requirements && job.jd.requirements.length > 0) {
+                jdHTML += `
+                    <div class="jd-section">
+                        <div class="jd-section-title">
+                            <i class="fas fa-user-check text-green-500"></i>
+                            任职要求
+                        </div>
+                        <ul class="jd-list">
+                            ${job.jd.requirements.map(r => `<li>${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (job.jd.bonus && job.jd.bonus.length > 0) {
+                jdHTML += `
+                    <div class="jd-section">
+                        <div class="jd-section-title">
+                            <i class="fas fa-star text-yellow-500"></i>
+                            加分项
+                        </div>
+                        <ul class="jd-list">
+                            ${job.jd.bonus.map(b => `<li>${b}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (job.jd.benefits && job.jd.benefits.length > 0) {
+                jdHTML += `
+                    <div class="jd-section">
+                        <div class="jd-section-title">
+                            <i class="fas fa-gift text-purple-500"></i>
+                            我们提供
+                        </div>
+                        <ul class="jd-list">
+                            ${job.jd.benefits.map(b => `<li>${b}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            return jdHTML;
+        }
+
+        // 更新侧边栏信息
+        function updateSidebar(playerSkills, job) {
+            // 更新头像
+            const playerName = localStorage.getItem('playerName') || '玩家';
+            document.getElementById('sidebarAvatar').textContent = playerName.charAt(0).toUpperCase();
+            document.getElementById('sidebarName').textContent = playerName;
+            document.getElementById('sidebarJob').textContent = localStorage.getItem('playerJobName') || 'Agent工程师';
+
+            // 技能分类统计
+            const techSkills = ['progPython', 'progGo', 'progJava', 'progRust', 'aimlML', 'aimlDL', 'aimlNLP', 'llmPrompt', 'llmRAG', 'llmFineTune', 'agentFramework', 'agentCore', 'agentMulti', 'engContainer', 'engDistributed', 'engAPI'];
+            const projectSkills = ['projBasic', 'projOpenSource', 'projBlog', 'projIntern', 'projBigCompany', 'projCoreProject', 'projPR', 'projCompetition', 'projPaper'];
+            const bonusSkills = ['bonusEnglish', 'bonusInfluence', 'bonusHonor', 'bonusStartup', 'bonusOverseas'];
+
+            const techCount = playerSkills.filter(s => techSkills.includes(s)).length;
+            const projectCount = playerSkills.filter(s => projectSkills.includes(s)).length;
+            const bonusCount = playerSkills.filter(s => bonusSkills.includes(s)).length;
+
+            document.getElementById('techCount').textContent = techCount + '/16';
+            document.getElementById('techBar').style.width = (techCount / 16 * 100) + '%';
+
+            document.getElementById('projectCount').textContent = projectCount + '/9';
+            document.getElementById('projectBar').style.width = (projectCount / 9 * 100) + '%';
+
+            document.getElementById('bonusCount').textContent = bonusCount + '/5';
+            document.getElementById('bonusBar').style.width = (bonusCount / 5 * 100) + '%';
+
+            // 更新其他属性
+            const eduOption = playerSkills.find(s => s.startsWith('edu'));
+            document.getElementById('eduLevel').textContent = eduOption ? getSkillName(eduOption) : '未选择';
+
+            const psyOption = playerSkills.find(s => s.startsWith('psy'));
+            document.getElementById('psyLevel').textContent = psyOption ? getSkillName(psyOption) : '未选择';
+
+            const phyOption = playerSkills.find(s => s.startsWith('phy'));
+            document.getElementById('phyLevel').textContent = phyOption ? getSkillName(phyOption) : '未选择';
+
+            // 更新技能标签
+            const skillsContainer = document.getElementById('sidebarSkills');
+            if (playerSkills.length > 0) {
+                skillsContainer.innerHTML = playerSkills.map(skill => {
+                    const skillName = getSkillName(skill);
+                    const skillClass = getSkillClass(skill);
+                    return '<span class="skill-tag ' + skillClass + '">' + skillName + '</span>';
+                }).join('');
+            } else {
+                skillsContainer.innerHTML = '<p class="text-gray-400 text-sm italic">暂无技能</p>';
+            }
+
+            // 更新目标职位信息
+            const targetInfo = document.getElementById('targetJobInfo');
+            if (job) {
+                targetInfo.innerHTML = `
+                    <div class="text-sm">
+                        <p class="font-semibold text-blue-800">${job.title}</p>
+                        <p class="text-gray-600">${job.company}</p>
+                        <p class="text-gray-500">薪资: ${job.salary.min}-${job.salary.max}K</p>
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            ${job.tags.map(tag => '<span class="px-2 py-0.5 bg-white text-blue-700 rounded-full text-xs border border-blue-200">' + tag + '</span>').join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 初始化页面
+        function initPage() {
+            // 获取角色信息
+            const playerName = localStorage.getItem('playerName') || '玩家';
+            const playerGender = localStorage.getItem('playerGender') || '未知';
+            const playerSkills = JSON.parse(localStorage.getItem('playerSkills') || '[]');
+
+            // 填充基本信息
+            document.getElementById('playerName').value = playerName;
+            document.getElementById('playerGender').value = playerGender;
+
+            // 获取目标职位信息
+            const jobId = getUrlParameter('jobId');
+            const job = jobsData.find(j => j.id === jobId);
+
+            const jobInfoContainer = document.getElementById('jobInfo');
+            if (job) {
+                const jdHTML = generateJobDetailHTML(job);
+                
+                jobInfoContainer.innerHTML = `
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5 border border-blue-100 mb-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-secondary">${job.title}</h2>
+                                <p class="text-gray-600 mt-1">
+                                    <i class="fas fa-building mr-1 text-gray-400"></i>${job.company}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-accent">${job.salary.min}-${job.salary.max}K</p>
+                                <p class="text-xs text-gray-500">薪资范围</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm text-gray-500 mb-4">
+                            <span>
+                                <i class="fas fa-map-marker-alt mr-1"></i>${job.location}
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${job.tags.map(tag => '<span class="px-3 py-1 bg-white text-blue-700 text-xs rounded-full border border-blue-200">' + tag + '</span>').join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-6 border border-gray-200">
+                        ${jdHTML}
+                    </div>
+                `;
+            } else {
+                jobInfoContainer.innerHTML = `
+                    <div class="bg-red-50 rounded-xl p-5 border border-red-200 text-center">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-2xl mb-2"></i>
+                        <p class="text-red-600">未找到目标职位信息</p>
+                        <button onclick="goBack()" class="mt-3 text-primary hover:underline">返回职位列表</button>
+                    </div>
+                `;
+            }
+
+            // 更新侧边栏
+            updateSidebar(playerSkills, job);
+            
+            // 初始化小助手
+            initAssistant();
+        }
+
+        // 返回上一页
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // 提交简历
+        function submitResume(event) {
+            event.preventDefault();
+
+            const selfIntro = document.getElementById('selfIntro').value.trim();
+
+            if (!selfIntro) {
+                alert('请填写自我介绍内容');
+                return;
+            }
+
+            const playerName = localStorage.getItem('playerName') || '游客';
+            const playerGender = localStorage.getItem('playerGender') || '未知';
+            const playerSkills = JSON.parse(localStorage.getItem('playerSkills') || '[]');
+            const jobId = getUrlParameter('jobId');
+
+            // 保存简历信息
+            const resume = {
+                jobId: jobId,
+                name: playerName,
+                gender: playerGender,
+                email: 'player@mail.com',
+                skills: playerSkills,
+                selfIntro: selfIntro,
+                submittedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('currentResume', JSON.stringify(resume));
+
+            // 跳转到结果页面
+            window.location.href = 'result.html';
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>

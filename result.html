@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投递结果 - 破壁纪元</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4169E1',
+                        secondary: '#2C3E50',
+                        accent: '#E74C3C',
+                        background: '#F5F7FA',
+                        card: '#FFFFFF',
+                        border: '#E8E8E8'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+        * {
+            font-family: 'Noto Sans SC', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #4169E1 0%, #6B8DD6 100%);
+        }
+
+        .skill-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin: 4px;
+        }
+
+        .skill-tag.python { background: #3776ab; color: white; }
+        .skill-tag.rust { background: #ce422b; color: white; }
+        .skill-tag.java { background: #ed8b00; color: white; }
+        .skill-tag.go { background: #00add8; color: white; }
+        .skill-tag.default { background: #e5e7eb; color: #374151; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes checkmark {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .animate-checkmark {
+            animation: checkmark 0.5s ease forwards;
+        }
+
+        .animate-shake {
+            animation: shake 0.5s ease forwards;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4169E1 0%, #6B8DD6 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(65, 105, 225, 0.4);
+        }
+
+        .result-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+
+        .result-icon.success {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        }
+
+        .result-icon.fail {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+        }
+
+        /* 小助手样式 */
+        .assistant-toggle {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .assistant-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        .assistant-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 11px;
+            background: #ef4444;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+        }
+
+        .assistant-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 380px;
+            height: 520px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 99;
+        }
+
+        .assistant-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            color: white;
+        }
+
+        .assistant-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: #f9fafb;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-ai {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message-ai .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .message-user {
+            justify-content: flex-end;
+        }
+
+        .message-user .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message-ai .message-content {
+            background: white;
+            color: #374151;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .message-user {
+            justify-content: flex-end;
+        }
+
+        .message-user .message-content {
+            background: #10b981;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .assistant-input-area {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+
+        .assistant-input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .assistant-input:focus {
+            border-color: #667eea;
+        }
+
+        .assistant-send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .assistant-send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .assistant-panel {
+                width: calc(100% - 48px);
+                right: 24px;
+                left: 24px;
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div id="resultHeader" class="gradient-bg p-6 text-center">
+                <!-- 动态内容 -->
+            </div>
+
+            <div class="p-6" id="resultContent">
+                <!-- 动态内容 -->
+            </div>
+
+            <div class="p-6 border-t border-gray-100 text-center">
+                <button onclick="goBack()" 
+                    class="btn-primary text-white font-bold py-3 px-8 rounded-xl shadow-lg inline-flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>返回职位列表
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 小助手悬浮按钮 -->
+    <div class="assistant-toggle" id="assistantToggle" onclick="toggleAssistant()">
+        <i class="fas fa-comments text-xl"></i>
+        <div class="assistant-badge" id="assistantBadge" style="display: none;">0</div>
+    </div>
+
+    <!-- 小助手面板 -->
+    <div class="assistant-panel hidden" id="assistantPanel">
+        <div class="assistant-header">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold">求职小助手</h3>
+                        <p class="text-xs text-white/70">随时为您解答</p>
+                    </div>
+                </div>
+                <button onclick="toggleAssistant()" class="text-white/70 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="assistant-messages" id="assistantMessages">
+            <!-- 消息会在这里动态添加 -->
+        </div>
+        
+        <div class="assistant-input-area">
+            <input type="text" class="assistant-input" id="assistantInput" placeholder="输入您的问题..." onkeypress="handleAssistantInput(event)">
+            <button class="assistant-send-btn" onclick="sendAssistantMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 职位数据（带完整JD）
+        const jobsData = [
+            {
+                id: 'job-micro-1',
+                company: '光年AI工作室',
+                companyType: '微型企业',
+                companyTypeClass: 'micro',
+                title: 'AI应用开发工程师',
+                salary: { min: 8, max: 15 },
+                location: '远程办公',
+                passScore: 20,
+                requirements: [
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -15, desc: 'Python技能' },
+                    { field: 'project', type: 'hard', condition: 'projOpenSource', score: -10, desc: '个人项目经历' },
+                    { field: 'skill', type: 'soft', condition: 'llmPrompt', score: 5, desc: 'Prompt Engineering' },
+                    { field: 'skill', type: 'soft', condition: 'llmRAG', score: 8, desc: 'RAG技术' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 5, desc: 'API开发能力' },
+                    { field: 'project', type: 'soft', condition: 'projBasic', score: 2, desc: '课程/毕业设计' },
+                    { field: 'project', type: 'soft', condition: 'projBlog', score: 3, desc: '技术博客/社区经历' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusStartup', score: 5, desc: '创业经历' }
+                ],
+                jd: {
+                    summary: '我们是光年AI工作室，一个专注于AI应用的小团队。目前正在寻找一位有热情的AI应用开发工程师，一起打造有创意的AI产品。',
+                    requirements: [
+                        '掌握Python编程，能够独立完成小项目开发',
+                        '有个人项目或开源项目经验，了解AI应用的基本原理',
+                        '对AI技术有好奇心，愿意学习新技术'
+                    ]
+                }
+            },
+            {
+                id: 'job-sme-1',
+                company: '数智未来科技',
+                companyType: '中小企业',
+                companyTypeClass: 'sme',
+                title: 'Python开发工程师（AI方向）',
+                salary: { min: 12, max: 22 },
+                location: '杭州·滨江区',
+                passScore: 40,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '大专', score: -20, desc: '大专及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -20, desc: 'Python技能' },
+                    { field: 'skill', type: 'core', condition: 'llmRAG', score: 12, desc: 'RAG技术' },
+                    { field: 'skill', type: 'soft', condition: 'agentFramework', score: 6, desc: 'Agent框架经验' },
+                    { field: 'skill', type: 'soft', condition: 'llmPrompt', score: 4, desc: 'Prompt Engineering' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 4, desc: 'API开发能力' },
+                    { field: 'skill', type: 'soft', condition: 'engContainer', score: 5, desc: '容器化部署经验' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 6, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projOpenSource', score: 4, desc: '个人开源项目' },
+                    { field: 'project', type: 'soft', condition: 'projBlog', score: 3, desc: '技术博客/社区经历' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusEnglish', score: 3, desc: '英语能力' },
+                    { field: 'education', type: 'soft', condition: '本科', score: 5, desc: '本科及以上' }
+                ],
+                jd: {
+                    summary: '数智未来科技是一家专注于企业智能化转型的科技公司，目前已完成B轮融资。',
+                    requirements: [
+                        '本科及以上学历，计算机相关专业优先',
+                        '精通Python，熟悉FastAPI或Django等Web框架',
+                        '有AI应用开发经验，了解LLM基本原理'
+                    ]
+                }
+            },
+            {
+                id: 'job-unicorn-1',
+                company: '迅脑智能',
+                companyType: '独角兽',
+                companyTypeClass: 'unicorn',
+                title: 'AI Agent工程师',
+                salary: { min: 25, max: 45 },
+                location: '深圳·南山区',
+                passScore: 60,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '本科', score: -25, desc: '本科及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -20, desc: 'Python技能' },
+                    { field: 'skill', type: 'hard', condition: 'llmRAG', score: -15, desc: 'RAG技术' },
+                    { field: 'skill', type: 'core', condition: 'agentFramework', score: 10, desc: 'Agent框架经验' },
+                    { field: 'skill', type: 'core', condition: 'agentCore', score: 12, desc: 'Agent核心能力' },
+                    { field: 'skill', type: 'core', condition: 'agentMulti', score: 15, desc: 'Multi-Agent协作经验' },
+                    { field: 'skill', type: 'soft', condition: 'llmPrompt', score: 4, desc: 'Prompt Engineering' },
+                    { field: 'skill', type: 'soft', condition: 'llmFineTune', score: 8, desc: 'Fine-tuning经验' },
+                    { field: 'skill', type: 'soft', condition: 'aimlNLP', score: 4, desc: 'NLP基础' },
+                    { field: 'skill', type: 'soft', condition: 'engContainer', score: 3, desc: '容器化部署经验' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 4, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projBigCompany', score: 8, desc: '大厂实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projPR', score: 8, desc: '开源贡献' },
+                    { field: 'project', type: 'soft', condition: 'projPaper', score: 12, desc: '顶会论文' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusInfluence', score: 5, desc: '技术影响力' },
+                    { field: 'project', type: 'soft', condition: 'projCompetition', score: 5, desc: '专业比赛获奖' },
+                    { field: 'education', type: 'soft', condition: '211', score: 5, desc: '211本科及以上' }
+                ],
+                jd: {
+                    summary: '迅脑智能是一家专注于通用人工智能的独角兽企业，致力于打造下一代AI Agent平台。',
+                    requirements: [
+                        '本科及以上学历，计算机、数学、物理等相关专业',
+                        '精通Python，有大型项目开发经验',
+                        '深入理解LLM原理，熟悉至少一种LLM API'
+                    ]
+                }
+            },
+            {
+                id: 'job-big-1',
+                company: '云智科技',
+                companyType: '大厂',
+                companyTypeClass: 'big',
+                title: '高级AI工程师 — Agent平台方向',
+                salary: { min: 35, max: 60 },
+                location: '北京·海淀区',
+                passScore: 80,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '211', score: -30, desc: '211本科及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -25, desc: 'Python技能' },
+                    { field: 'skill', type: 'hard', condition: 'engDistributed', score: -20, desc: '分布式系统经验' },
+                    { field: 'skill', type: 'hard', condition: 'engContainer', score: -15, desc: '容器化部署经验' },
+                    { field: 'skill', type: 'core', condition: 'llmRAG', score: 10, desc: 'RAG技术' },
+                    { field: 'skill', type: 'core', condition: 'agentCore', score: 10, desc: 'Agent核心能力' },
+                    { field: 'skill', type: 'core', condition: 'agentMulti', score: 12, desc: 'Multi-Agent协作经验' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 3, desc: 'API开发能力' },
+                    { field: 'skill', type: 'soft', condition: 'llmFineTune', score: 5, desc: 'Fine-tuning经验' },
+                    { field: 'skill', type: 'soft', condition: 'aimlML', score: 3, desc: '机器学习基础' },
+                    { field: 'project', type: 'core', condition: 'projBigCompany', score: 12, desc: '大厂实习经历' },
+                    { field: 'project', type: 'core', condition: 'projCoreProject', score: 18, desc: '大厂核心项目经历' },
+                    { field: 'project', type: 'soft', condition: 'projPR', score: 6, desc: '开源贡献' },
+                    { field: 'project', type: 'soft', condition: 'projPaper', score: 8, desc: '顶会论文' },
+                    { field: 'project', type: 'soft', condition: 'projCompetition', score: 4, desc: '专业比赛获奖' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusInfluence', score: 5, desc: '技术影响力' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusHonor', score: 4, desc: '竞赛荣誉' },
+                    { field: 'education', type: 'soft', condition: '985', score: 8, desc: '985本科' },
+                    { field: 'education', type: 'soft', condition: '硕士', score: 5, desc: '硕士' }
+                ],
+                jd: {
+                    summary: '云智科技是全球领先的云计算和人工智能公司，为数百万企业提供云服务。',
+                    requirements: [
+                        '211本科及以上学历，计算机相关专业',
+                        '精通Python/Golang，具备大型分布式系统开发经验',
+                        '熟悉Kubernetes生态，了解容器编排原理'
+                    ]
+                }
+            },
+            {
+                id: 'job-foreign-1',
+                company: 'GlobalAI',
+                companyType: '外企',
+                companyTypeClass: 'foreign',
+                title: 'AI Engineer — Agent Platform Team',
+                salary: { min: 30, max: 55 },
+                location: '上海·浦东新区',
+                passScore: 60,
+                requirements: [
+                    { field: 'bonus', type: 'hard', condition: 'bonusEnglish', score: -25, desc: '英语能力' },
+                    { field: 'education', type: 'hard', condition: '本科', score: -20, desc: '本科及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -15, desc: 'Python技能' },
+                    { field: 'skill', type: 'core', condition: 'agentFramework', score: 10, desc: 'Agent框架经验' },
+                    { field: 'skill', type: 'core', condition: 'llmRAG', score: 10, desc: 'RAG技术' },
+                    { field: 'skill', type: 'soft', condition: 'agentCore', score: 8, desc: 'Agent核心能力' },
+                    { field: 'skill', type: 'soft', condition: 'engContainer', score: 4, desc: '容器化部署经验' },
+                    { field: 'skill', type: 'soft', condition: 'engDistributed', score: 5, desc: '分布式系统经验' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 3, desc: 'API开发能力' },
+                    { field: 'skill', type: 'soft', condition: 'llmPrompt', score: 3, desc: 'Prompt Engineering' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 4, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projBigCompany', score: 6, desc: '大厂实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projPR', score: 6, desc: '开源贡献' },
+                    { field: 'project', type: 'soft', condition: 'projPaper', score: 6, desc: '顶会论文' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusOverseas', score: 10, desc: '海外经历' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusInfluence', score: 4, desc: '技术影响力' },
+                    { field: 'education', type: 'soft', condition: '硕士', score: 5, desc: '硕士' }
+                ],
+                jd: {
+                    summary: 'GlobalAI is a Fortune 500 technology company leading the global AI revolution.',
+                    requirements: [
+                        'Excellent English communication skills',
+                        'Bachelor\'s degree or above in Computer Science',
+                        'Proficient in Python, with AI application development experience'
+                    ]
+                }
+            },
+            {
+                id: 'job-chaos-1',
+                company: '星辰万维科技',
+                companyType: '混乱型',
+                companyTypeClass: 'chaos',
+                title: 'AI全栈开发工程师',
+                salary: { min: 15, max: 25 },
+                location: '成都·高新区',
+                passScore: 30,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '本科', score: -15, desc: '本科及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -10, desc: 'Python技能' },
+                    { field: 'skill', type: 'soft', condition: 'progGo', score: 5, desc: '第二种语言（Java/Go/JS）' },
+                    { field: 'skill', type: 'soft', condition: 'engContainer', score: 5, desc: '前端框架经验' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 3, desc: '数据库经验' },
+                    { field: 'skill', type: 'soft', condition: 'engContainer', score: 3, desc: '容器化部署经验' },
+                    { field: 'skill', type: 'soft', condition: 'llmRAG', score: 5, desc: 'RAG技术' },
+                    { field: 'skill', type: 'soft', condition: 'agentFramework', score: 5, desc: 'Agent框架经验' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 4, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projOpenSource', score: 4, desc: '个人开源项目' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusEnglish', score: 2, desc: '英语能力' }
+                ],
+                jd: {
+                    summary: '星辰万维科技是一家业务快速发展的创业公司，目前正处于高速发展期。',
+                    requirements: [
+                        '本科及以上学历，专业不限',
+                        '会Python，最好也会Java/Go/JS其中之一',
+                        '懂数据库，最好也了解点AI'
+                    ]
+                }
+            },
+            {
+                id: 'job-screw-1',
+                company: '鼎信金融科技',
+                companyType: '螺丝钉型',
+                companyTypeClass: 'screw',
+                title: 'AI对话系统开发工程师',
+                salary: { min: 15, max: 25 },
+                location: '北京·朝阳区',
+                passScore: 40,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '本科', score: -15, desc: '本科及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -15, desc: 'Python技能' },
+                    { field: 'skill', type: 'core', condition: 'agentFramework', score: 12, desc: 'Agent框架经验（LangChain）' },
+                    { field: 'skill', type: 'soft', condition: 'llmPrompt', score: 6, desc: 'Prompt Engineering' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 4, desc: 'API开发能力' },
+                    { field: 'skill', type: 'soft', condition: 'llmRAG', score: 4, desc: 'RAG技术' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 5, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projOpenSource', score: 3, desc: '个人开源项目' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusEnglish', score: 2, desc: '英语能力' }
+                ],
+                jd: {
+                    summary: '鼎信金融科技是一家专注于金融行业的软件服务商，为银行、保险等金融机构提供IT解决方案。',
+                    requirements: [
+                        '本科及以上学历，计算机相关专业',
+                        '精通Python，熟悉LangChain或其他Agent框架',
+                        '有Prompt Engineering实战经验'
+                    ]
+                }
+            },
+            {
+                id: 'job-pie-1',
+                company: '元宇宙智能科技',
+                companyType: '画饼型',
+                companyTypeClass: 'pie',
+                title: 'AI Agent架构师（P7级别）',
+                salary: { min: 40, max: 70 },
+                location: '深圳·南山区',
+                passScore: 50,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '本科', score: -15, desc: '本科及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -10, desc: 'Python技能' },
+                    { field: 'skill', type: 'core', condition: 'agentFramework', score: 10, desc: 'Agent框架经验' },
+                    { field: 'skill', type: 'core', condition: 'agentMulti', score: 12, desc: 'Multi-Agent协作经验' },
+                    { field: 'skill', type: 'core', condition: 'llmRAG', score: 8, desc: 'RAG技术' },
+                    { field: 'skill', type: 'soft', condition: 'agentCore', score: 8, desc: 'Agent核心能力' },
+                    { field: 'skill', type: 'soft', condition: 'llmPrompt', score: 4, desc: 'Prompt Engineering' },
+                    { field: 'skill', type: 'soft', condition: 'llmFineTune', score: 5, desc: 'Fine-tuning经验' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 4, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projBigCompany', score: 8, desc: '大厂实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projPR', score: 6, desc: '开源贡献' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusInfluence', score: 5, desc: '技术影响力' },
+                    { field: 'education', type: 'soft', condition: '211', score: 5, desc: '211本科及以上' }
+                ],
+                jd: {
+                    summary: '元宇宙智能科技是国内领先的元宇宙基础设施提供商，致力于用AI Agent技术赋能元宇宙数字人。',
+                    requirements: [
+                        '本科及以上学历，5年以上工作经验',
+                        '精通Python，精通至少一门编译型语言',
+                        '深入理解Agent架构，有大型Agent系统设计经验'
+                    ]
+                }
+            },
+            {
+                id: 'job-throw-1',
+                company: '智慧城市集团',
+                companyType: '甩锅型',
+                companyTypeClass: 'throw',
+                title: 'AI中台开发工程师',
+                salary: { min: 18, max: 30 },
+                location: '杭州·西湖区',
+                passScore: 35,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '本科', score: -15, desc: '本科及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -15, desc: 'Python技能' },
+                    { field: 'skill', type: 'core', condition: 'llmRAG', score: 8, desc: 'RAG技术' },
+                    { field: 'skill', type: 'soft', condition: 'agentFramework', score: 6, desc: 'Agent框架经验' },
+                    { field: 'skill', type: 'soft', condition: 'llmPrompt', score: 4, desc: 'Prompt Engineering' },
+                    { field: 'skill', type: 'soft', condition: 'llmFineTune', score: 5, desc: 'Fine-tuning经验' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 4, desc: 'API开发能力' },
+                    { field: 'skill', type: 'soft', condition: 'engContainer', score: 3, desc: '容器化部署经验' },
+                    { field: 'skill', type: 'soft', condition: 'progJava', score: 4, desc: '第二种语言（Java）' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 4, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projOpenSource', score: 3, desc: '个人开源项目' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusInfluence', score: 3, desc: '技术影响力' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusEnglish', score: 2, desc: '英语能力' }
+                ],
+                jd: {
+                    summary: '智慧城市集团是国内领先的城市数字化服务商，承担了多个城市的智慧城市项目建设。',
+                    requirements: [
+                        '本科及以上学历，计算机相关专业',
+                        '精通Python，熟悉FastAPI或Flask',
+                        '有AI应用开发经验，了解RAG等常见AI能力'
+                    ]
+                }
+            },
+            {
+                id: 'job-pension-1',
+                company: '华信软件',
+                companyType: '养老型',
+                companyTypeClass: 'pension',
+                title: '软件开发工程师',
+                salary: { min: 8, max: 15 },
+                location: '济南·历下区',
+                passScore: 20,
+                requirements: [
+                    { field: 'education', type: 'hard', condition: '大专', score: -15, desc: '大专及以上' },
+                    { field: 'skill', type: 'hard', condition: 'progPython', score: -10, desc: 'Python技能' },
+                    { field: 'skill', type: 'soft', condition: 'engAPI', score: 5, desc: 'API开发能力' },
+                    { field: 'skill', type: 'soft', condition: 'progJava', score: 5, desc: '第二种语言（Java）' },
+                    { field: 'project', type: 'soft', condition: 'projIntern', score: 4, desc: '实习经历' },
+                    { field: 'project', type: 'soft', condition: 'projBasic', score: 2, desc: '课程/毕业设计' },
+                    { field: 'bonus', type: 'soft', condition: 'bonusEnglish', score: 2, desc: '英语能力' }
+                ],
+                jd: {
+                    summary: '华信软件是一家成立20年的传统软件企业，主要为本地企业提供IT服务。',
+                    requirements: [
+                        '大专及以上学历',
+                        '会Java，会MySQL',
+                        '能看懂别人写的代码'
+                    ]
+                }
+            }
+        ];
+
+        // 小助手状态
+        let assistantOpen = false;
+        let unreadCount = 0;
+        let messages = [];
+
+        // 切换小助手面板
+        function toggleAssistant() {
+            assistantOpen = !assistantOpen;
+            const panel = document.getElementById('assistantPanel');
+            const toggle = document.getElementById('assistantToggle');
+            
+            if (assistantOpen) {
+                panel.classList.remove('hidden');
+                document.getElementById('assistantBadge').style.display = 'none';
+                unreadCount = 0;
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        // 添加消息
+        function addAssistantMessage(content, isUser = false) {
+            const container = document.getElementById('assistantMessages');
+            const messageDiv = document.createElement('div');
+            
+            if (isUser) {
+                messageDiv.className = 'message message-user';
+                messageDiv.innerHTML = `
+                    <div class="message-content">${content}</div>
+                    <div class="avatar">${localStorage.getItem('playerName')?.charAt(0) || '你'}</div>
+                `;
+            } else {
+                messageDiv.className = 'message message-ai';
+                messageDiv.innerHTML = `
+                    <div class="avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">${content}</div>
+                `;
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            messages.push({ content, isUser });
+        }
+
+        // 显示打字指示器
+        function showTypingIndicator() {
+            const container = document.getElementById('assistantMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'message message-ai';
+            typingDiv.innerHTML = `
+                <div class="avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 隐藏打字指示器
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        // 处理输入
+        function handleAssistantInput(event) {
+            if (event.key === 'Enter') {
+                sendAssistantMessage();
+            }
+        }
+
+        // 发送消息
+        function sendAssistantMessage() {
+            const input = document.getElementById('assistantInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addAssistantMessage(message, true);
+            input.value = '';
+            
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                hideTypingIndicator();
+                const response = processAssistantQuery(message);
+                addAssistantMessage(response);
+            }, 1000);
+        }
+
+        // 处理查询（预留接口）
+        function processAssistantQuery(query) {
+            const q = query.toLowerCase();
+            
+            if (q.includes('简历') || q.includes('自我介绍')) {
+                return '简历中的自我介绍非常重要！建议从以下几个方面入手：<br><br>1. <strong>技术栈</strong>：列出你最擅长的编程语言和工具<br>2. <strong>项目经验</strong>：描述1-2个最有代表性的项目<br>3. <strong>个人优势</strong>：突出你的独特价值<br><br>记住，内容要真实具体，避免空泛的形容词！';
+            }
+            
+            if (q.includes('薪资') || q.includes('工资')) {
+                return '薪资谈判是求职中的重要环节。建议：<br><br>1. 先了解市场行情<br>2. 明确自己的底线<br>3. 展示自己的价值<br>4. 留有谈判空间<br><br>不要太急于谈薪资，先展示你的能力！';
+            }
+            
+            if (q.includes('面试')) {
+                return '面试准备很关键！建议：<br><br>1. 熟读JD，了解岗位职责<br>2. 准备STAR法则描述项目经历<br>3. 复习核心技术点<br>4. 准备一些反问面试官的问题<br><br>祝你面试顺利！';
+            }
+            
+            if (q.includes('谢谢')) {
+                return '不客气！有问题随时问我～ 😊';
+            }
+            
+            return '我理解你的问题。作为求职小助手，我可以帮你解答关于简历、面试、薪资等方面的问题。你有什么具体想了解的吗？';
+        }
+
+        // 获取技能名称
+        function getSkillName(skillId) {
+            const skillNames = {
+                'progPython': 'Python',
+                'progGo': 'Go',
+                'progJava': 'Java',
+                'progRust': 'Rust',
+                'aimlML': '机器学习基础',
+                'aimlDL': '深度学习基础',
+                'aimlNLP': 'NLP基础',
+                'llmPrompt': 'Prompt Engineering',
+                'llmRAG': 'RAG技术',
+                'llmFineTune': 'Fine-tuning',
+                'agentFramework': 'Agent框架',
+                'agentCore': 'Agent核心能力',
+                'agentMulti': 'Multi-Agent协作',
+                'engContainer': '容器化部署',
+                'engDistributed': '分布式系统',
+                'engAPI': 'API开发',
+                'projBasic': '课程/毕业设计',
+                'projOpenSource': '个人开源项目',
+                'projBlog': '技术博客/社区',
+                'projIntern': '普通实习',
+                'projBigCompany': '大厂实习',
+                'projCoreProject': '大厂核心项目',
+                'projPR': '开源贡献',
+                'projCompetition': '专业比赛获奖',
+                'projPaper': '顶会论文',
+                'bonusEnglish': '英语能力',
+                'bonusInfluence': '技术影响力',
+                'bonusHonor': '竞赛荣誉',
+                'bonusStartup': '创业经历',
+                'bonusOverseas': '海外经历',
+                'edu专科': '专科',
+                'edu普通本科': '普通本科',
+                'edu211': '211本科',
+                'edu985': '985本科',
+                'edu硕士': '硕士',
+                'psy玻璃心': '玻璃心',
+                'psy普通人': '普通人',
+                'psy压力爱好者': '压力爱好者',
+                'phy电量不足': '电量不足',
+                'phy普通人': '普通人',
+                'phy牛马体质': '牛马体质'
+            };
+            return skillNames[skillId] || skillId;
+        }
+
+        // 获取技能样式
+        function getSkillClass(skillId) {
+            if (skillId === 'progPython') return 'python';
+            if (skillId === 'progRust') return 'rust';
+            if (skillId === 'progJava') return 'java';
+            if (skillId === 'progGo') return 'go';
+            return 'default';
+        }
+
+        // 计算简历得分
+        function calculateScore(resume, job) {
+            let score = 0;
+            const matchedSkills = [];
+            const failedHardSkills = [];
+
+            job.requirements.forEach(req => {
+                if (req.type === 'hard') {
+                    if (resume.skills.includes(req.condition)) {
+                        score += Math.abs(req.score);
+                    } else {
+                        score += req.score;
+                        failedHardSkills.push(req.desc);
+                    }
+                } else {
+                    if (resume.skills.includes(req.condition)) {
+                        score += req.score;
+                        matchedSkills.push(req.desc);
+                    }
+                }
+            });
+
+            return { score, matchedSkills, failedHardSkills };
+        }
+
+        // 初始化小助手解读
+        function initAssistantWithResult(passed, job, result) {
+            addAssistantMessage('📋 让我来分析一下这次投递的结果...');
+            
+            setTimeout(() => {
+                addAssistantMessage(`你投递的是 <strong>${job.company}</strong> 的 <strong>${job.title}</strong>。`);
+            }, 800);
+            
+            setTimeout(() => {
+                if (passed) {
+                    addAssistantMessage('🎉 恭喜！你的简历成功通过了初筛！');
+                } else {
+                    addAssistantMessage('😢 很遗憾，你的简历未能通过这次筛选。');
+                }
+            }, 1600);
+            
+            setTimeout(() => {
+                addAssistantMessage('💪 不要灰心！每一次投递都是经验。继续投递其他职位，或者回到角色创建页面调整你的技能分配。加油！');
+            }, 2400);
+        }
+
+        // 初始化页面
+        function initPage() {
+            const resumeData = localStorage.getItem('currentResume');
+            
+            if (!resumeData) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const resume = JSON.parse(resumeData);
+            const job = jobsData.find(j => j.id === resume.jobId);
+
+            if (!job) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const result = calculateScore(resume, job);
+            const passed = result.score >= job.passScore;
+
+            // 设置头部
+            const header = document.getElementById('resultHeader');
+            if (passed) {
+                header.innerHTML = `
+                    <div class="result-icon success animate-checkmark">
+                        <i class="fas fa-check text-white text-5xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white mb-2">恭喜通过初筛！</h1>
+                    <p class="text-blue-100">您的简历已成功投递，等待面试通知...</p>
+                `;
+            } else {
+                header.innerHTML = `
+                    <div class="result-icon fail animate-shake">
+                        <i class="fas fa-times text-white text-5xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white mb-2">未能通过初筛</h1>
+                    <p class="text-blue-100">您的简历暂不符合该职位要求...</p>
+                `;
+            }
+
+            // 设置内容
+            const content = document.getElementById('resultContent');
+            
+            let matchedHTML = '';
+            if (result.matchedSkills.length > 0) {
+                matchedHTML = `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-green-700 mb-2 flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i>匹配项
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${result.matchedSkills.map(s => `<span class="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            let failedHTML = '';
+            if (result.failedHardSkills.length > 0) {
+                failedHTML = `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-red-700 mb-2 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>未满足的条件
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${result.failedHardSkills.map(s => `<span class="px-3 py-1 bg-red-100 text-red-700 text-sm rounded-full">${s}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-secondary">${job.title}</h2>
+                            <p class="text-gray-600 mt-1">
+                                <i class="fas fa-building mr-1 text-gray-400"></i>${job.company}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xl font-bold ${passed ? 'text-green-600' : 'text-red-600'}">${result.score}分</p>
+                            <p class="text-xs text-gray-500">得分 / 及格线: ${job.passScore}分</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    ${passed ? matchedHTML : (failedHTML + matchedHTML)}
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-file-alt mr-2 text-blue-500"></i>您的简历信息
+                    </h4>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm text-gray-500">姓名</p>
+                                <p class="font-medium">${resume.name}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">性别</p>
+                                <p class="font-medium">${resume.gender}</p>
+                            </div>
+                            <div class="col-span-2">
+                                <p class="text-sm text-gray-500">联系方式</p>
+                                <p class="font-medium">${resume.email}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-500 mb-2">已选技能</p>
+                            <div class="flex flex-wrap gap-2">
+                                ${resume.skills.map(skill => {
+                                    const skillName = getSkillName(skill);
+                                    const skillClass = getSkillClass(skill);
+                                    return '<span class="skill-tag ' + skillClass + '">' + skillName + '</span>';
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <p class="text-sm text-gray-500 mb-2">自我介绍</p>
+                            <p class="text-gray-700 whitespace-pre-wrap">${resume.selfIntro || '未填写'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 初始化小助手并提供解读
+            initAssistantWithResult(passed, job, result);
+        }
+
+        // 返回上一页
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
+</html>
