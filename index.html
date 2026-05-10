@@ -1646,6 +1646,16 @@
             }, 2400);
         }
 
+        // 检查角色是否已创建
+        function checkCharacter() {
+            const playerName = localStorage.getItem('playerName');
+            if (!playerName) {
+                window.location.href = 'character-creation.html';
+                return false;
+            }
+            return true;
+        }
+
         // 事件监听
         document.getElementById('myBtn').addEventListener('click', openUserPanel);
         document.getElementById('closeUserPanel').addEventListener('click', closeUserPanel);
@@ -1662,6 +1672,9 @@
 
         // 页面加载
         document.addEventListener('DOMContentLoaded', function() {
+            if (!checkCharacter()) {
+                return;
+            }
             renderJobCards();
             updateUserPanel();
             initAssistant();

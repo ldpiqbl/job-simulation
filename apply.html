@@ -1336,8 +1336,14 @@
 
         // 初始化页面
         function initPage() {
+            // 检查角色是否已创建
+            const playerName = localStorage.getItem('playerName');
+            if (!playerName) {
+                window.location.href = 'character-creation.html';
+                return;
+            }
+            
             // 获取角色信息
-            const playerName = localStorage.getItem('playerName') || '玩家';
             const playerGender = localStorage.getItem('playerGender') || '未知';
             const playerSkills = JSON.parse(localStorage.getItem('playerSkills') || '[]');
 

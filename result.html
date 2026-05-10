@@ -949,6 +949,13 @@
 
         // 初始化页面
         function initPage() {
+            // 检查角色是否已创建
+            const playerName = localStorage.getItem('playerName');
+            if (!playerName) {
+                window.location.href = 'character-creation.html';
+                return;
+            }
+            
             const resumeData = localStorage.getItem('currentResume');
             
             if (!resumeData) {
